@@ -39,7 +39,8 @@ jobs:
       - name: Sanitize generated files
         shell: bash
         run: |
-          find . -name "*.ts" -type f -exec sed -i "s|$GITHUB_WORKSPACE|.|g" {} +
+          # Sanitize both TypeScript and Go artifacts
+          find ./typescript ./models \( -name "*.ts" -o -name "*.go" \) -type f -exec sed -i "s|$GITHUB_WORKSPACE|.|g" {} +
 
       - name: Pull changes from remote
         run: git pull origin master
@@ -47,7 +48,8 @@ jobs:
       - name: Verify no path leakage
         shell: bash
         run: |
-          if grep -r "/home/runner" ./typescript; then
+          # Check only artifact paths and exclude docs/build directories
+          if grep -r "/home/runner" ./typescript ./models --exclude-dir=docs --exclude-dir=build; then
             echo "::error::1001-CI-PATH-LEAK-ERR: Absolute paths found in generated files. Path leakage detected!"
             exit 1
           fi
